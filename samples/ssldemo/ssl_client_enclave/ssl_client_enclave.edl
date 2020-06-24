@@ -1,0 +1,53 @@
+enclave {
+    include "sgx_trts.h"
+    include "sgx_report.h"
+    include "sys/types.h"
+    include "sys/socket.h"
+    include "sys/select.h"
+    include "netdb.h"
+
+    trusted {        
+        public int do_ssl_client();
+    };
+
+    untrusted {
+        void ocall_print_string([in, string]const char *str);
+        void ocall_sprint_string([in, out, string]char *buf, [in, string]const char *str);
+        void ocall_puts([in, string]const char * str);
+        void exit(int retcode);
+        void ocall_putchar(int c);
+        int ocall_getaddrinfo([in, string]const char *node, [in, string]const char *service,
+                       [in, count=1]const struct addrinfo *hints,
+                       [out]struct addrinfo **res);
+        int ocall_socket(int domain, int type, int protocol);
+
+        /**
+         * @param addr - this is output of ocall_getaddrinfo, the buffer is in untrusted part, so we need set the attribute as user_check
+         **/
+        int ocall_connect(int sockfd, [user_check]const struct sockaddr *addr,
+                        socklen_t addrlen);
+        int ocall_close(int fd);
+        void ocall_freeaddrinfo([in]struct addrinfo *res);
+        int ocall_getsockopt(int sockfd, int level, int optname,
+                        [out, size=optlen]void *optval, socklen_t optlen, [out]socklen_t *out_optlen);
+        int ocall_setsockopt(int sockfd, int level, int optname,
+                        [in, size=optlen]const void *optval, socklen_t optlen);
+        /**
+         * @param addr - this is output of ocall_getaddrinfo, the buffer is in untrusted part, so we need set the attribute as user_check
+         **/
+        int ocall_bind(int sockfd, [user_check]const struct sockaddr *addr,
+                        socklen_t addrlen);
+        int ocall_listen(int sockfd, int backlog);
+        int ocall_accept(int sockfd, [out, count=1]struct sockaddr *addr, [out]socklen_t *addrlen);
+        int ocall_select(int nfds, [in, count=1]fd_set *readfds, [in, count=1]fd_set *writefds,
+                  [in, count=1]fd_set *exceptfds, [in]struct timeval *timeout);
+        ssize_t ocall_read(int fd, [out, size=count]void *buf, size_t count);
+        ssize_t ocall_write(int fd, [in, size=count]const void *buf, size_t count);
+        int ocall_shutdown(int sockfd, int how);
+        int ocall_getsockname(int sockfd, [out, count=1]struct sockaddr *addr, [out]socklen_t *addrlen);        
+        ssize_t ocall_recvfrom(int sockfd, [out, size=len]void *buf, size_t len, int flags,
+                    [out]struct sockaddr *src_addr, [out]socklen_t *addrlen);
+        int ocall_fcntl_get(int fd, int cmd);
+        int ocall_fcntl_set(int fd, int cmd, int option);        
+    };
+};
